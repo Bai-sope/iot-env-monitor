@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: iot-server
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/iot_monitor?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 8
+        min-idle: 2
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.iot.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+# MQTT 接入配置
+mqtt:
+  broker:
+    host: localhost
+    port: 1883
+    client-id: iot-server-sub
+    username: server
+    password: server123
+  # 订阅的主题（+ 单层通配，订阅所有产品的所有设备上行）
+  subscribe-topic: iot/+/+/up
+  # 设备状态主题（遗嘱消息）
+  status-topic: iot/+/+/status
+  qos: 1
+
+# InfluxDB 配置
+influx:
+  url: http://localhost:8086
+  token: my-super-secret-token
+  org: iot
+  bucket: sensor_data
+
+logging:
+  level:
+    com.example.iot: DEBUG
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
