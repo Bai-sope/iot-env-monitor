@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.iot.mapper.AlertMapper">
+
+    <resultMap id="RuleResultMap" type="com.example.iot.entity.AlertRule">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="metric" property="metric"/>
+        <result column="operator" property="operator"/>
+        <result column="threshold" property="threshold"/>
+        <result column="duration_sec" property="durationSec"/>
+        <result column="enabled" property="enabled"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <resultMap id="RecordResultMap" type="com.example.iot.entity.AlertRecord">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="rule_id" property="ruleId"/>
+        <result column="metric" property="metric"/>
+        <result column="metric_value" property="metricValue"/>
+        <result column="threshold" property="threshold"/>
+        <result column="message" property="message"/>
+        <result column="status" property="status"/>
+        <result column="triggered_at" property="triggeredAt"/>
+        <result column="handled_at" property="handledAt"/>
+    </resultMap>
+
+    <select id="findEnabledRules" resultMap="RuleResultMap">
+        SELECT id, device_id, metric, operator, threshold, duration_sec, enabled, created_at
+        FROM alert_rule
+        WHERE device_id = #{deviceId} AND enabled = 1
+    </select>
+
+    <insert id="insertRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_record
+            (device_id, rule_id, metric, metric_value, threshold, message, status)
+        VALUES
+            (#{deviceId}, #{ruleId}, #{metric}, #{metricValue}, #{threshold}, #{message}, 0)
+    </insert>
+
+    <select id="findRecent" resultMap="RecordResultMap">
+        SELECT id, device_id, rule_id, metric, metric_value, threshold,
+               message, status, triggered_at, handled_at
+        FROM alert_record
+        <where>
+            <if test="deviceId != null and deviceId != ''">
+                device_id = #{deviceId}
+            </if>
+        </where>
+        ORDER BY triggered_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <update id="markHandled">
+        UPDATE alert_record
+        SET status = #{status}, handled_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

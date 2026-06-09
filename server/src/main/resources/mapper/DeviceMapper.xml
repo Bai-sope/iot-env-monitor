@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.iot.mapper.DeviceMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.iot.entity.Device">
+        <id column="id" property="id"/>
+        <result column="product_key" property="productKey"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="location" property="location"/>
+        <result column="online" property="online"/>
+        <result column="last_online_at" property="lastOnlineAt"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, product_key, device_id, device_name, location,
+        online, last_online_at, created_at, updated_at
+    </sql>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM device
+        ORDER BY id
+    </select>
+
+    <select id="findByDeviceId" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM device
+        WHERE device_id = #{deviceId}
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO device (product_key, device_id, device_name, location, online)
+        VALUES (#{productKey}, #{deviceId}, #{deviceName}, #{location}, #{online})
+    </insert>
+
+    <!-- 设备上线/掉线时更新状态。已在线的不重复写，减少写压力 -->
+    <update id="updateOnline">
+        UPDATE device
+        SET online = #{online},
+            last_online_at = CASE WHEN #{online} THEN NOW() ELSE last_online_at END
+        WHERE product_key = #{productKey}
+          AND device_id = #{deviceId}
+          AND online != #{online}
+    </update>
+
+    <select id="countOnline" resultType="int">
+        SELECT COUNT(*) FROM device WHERE online = 1
+    </select>
+
+</mapper>
